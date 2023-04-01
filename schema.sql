@@ -1,0 +1,13 @@
+CREATE TABLE vocab_sets (
+set_id INTEGER PRIMARY KEY,
+name TEXT NOT NULL UNIQUE,
+description TEXT
+);
+
+CREATE TABLE vocab (
+vocab_id INTEGER PRIMARY KEY,
+set_id INTEGER NOT NULL,
+word TEXT NOT NULL,
+definition TEXT NOT NULL,
+FOREIGN KEY (set_id) REFERENCES vocab_sets(set_id) ON DELETE CASCADE
+);
