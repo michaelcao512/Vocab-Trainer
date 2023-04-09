@@ -7,6 +7,7 @@ from tkinter import messagebox
 import json
 import os
 
+
 class Database:
     @staticmethod
     def get_connection():
@@ -55,19 +56,13 @@ class App:
 
         self.display_vocab_sets()
 
-
         start_training_button = tk.Button(
             root, text="Start Training", command=self.start_training)
         start_training_button.pack()
 
-
-
-
-
-
-
     # FUNCTIONS
     # vocab sets in the format {name: (id, description)}
+
     def get_vocab_sets(self):
         with Database.get_connection() as conn:
             c = conn.cursor()
@@ -126,6 +121,7 @@ class App:
             vocab_list_ret = {v[2]: v[3] for v in vocab_list}
             c.close()
             return vocab_list_ret
+
     def get_vocab_list_by_name(self, set_name):
         set_id = self.vocab_sets[set_name][0]
         return self.get_vocab_list(set_id)
@@ -158,10 +154,10 @@ class App:
         EditVocabSetWindow(self.root, set_id, set_name,
                            set_description, vocab_list, self)
 
-
     def start_training(self):
-       self.root.withdraw()
-       StartTrainingWindow(self.root, self)
+        self.root.withdraw()
+        StartTrainingWindow(self.root, self)
+
 
 class NewVocabSetWindow:
     def __init__(self, parent, app):
@@ -281,9 +277,9 @@ class DeleteVocabSetWindow:
         self.app = app
         self.parent = parent
 
-
         self.vocab_sets_listbox = tk.Listbox(self.window, width=40)
-        self.vocab_sets_listbox.grid(row=1, column=0, columnspan=2, sticky='nsew')
+        self.vocab_sets_listbox.grid(
+            row=1, column=0, columnspan=2, sticky='nsew')
         scrollbar = ttk.Scrollbar(
             self.window, orient="vertical", command=self.vocab_sets_listbox.yview)
         self.vocab_sets_listbox.configure(yscrollcommand=scrollbar.set)
@@ -292,14 +288,12 @@ class DeleteVocabSetWindow:
         for vocab_set in vocab_sets:
             self.vocab_sets_listbox.insert(tk.END, vocab_set)
 
-
-
         delete_button = tk.Button(self.window, text="Delete",
                                   command=lambda: self.delete_vocab_set())
         delete_button.grid(row=2, column=0)
 
         cancel_button = tk.Button(
-            self.window, text="Cancel", command=lambda: (self.window.destroy(),self.parent.deiconify()))
+            self.window, text="Cancel", command=lambda: (self.window.destroy(), self.parent.deiconify()))
         cancel_button.grid(row=2, column=1)
 
     def delete_vocab_set(self):
@@ -358,7 +352,7 @@ class EditVocabSetWindow:
         self.def_entry = tk.Entry(self.window)
         self.def_entry.grid(row=3, column=1)
 
-        # Create the Treeview 
+        # Create the Treeview
         self.vocab_treeview = ttk.Treeview(
             self.window, columns=("Word", "Definition"), show="headings")
         self.vocab_treeview.heading("Word", text="Word")
@@ -378,13 +372,13 @@ class EditVocabSetWindow:
         # Fill vocab_listbox with current vocab
         self.fill_vocab_treeview()
 
-       # Delete word  (bind to right click)
+        # Delete word  (bind to right click)
         if sys.platform == "darwin":
             self.vocab_treeview.bind(
-                    "<Button-2>", lambda event: self.delete_vocab_word(event))
+                "<Button-2>", lambda event: self.delete_vocab_word(event))
         else:
             self.vocab_treeview.bind(
-                    "<Button-3>", lambda event: self.delete_vocab_word(event))
+                "<Button-3>", lambda event: self.delete_vocab_word(event))
 
         # Edit word  (bind to double click)
         self.vocab_treeview.bind(
@@ -437,13 +431,12 @@ class EditVocabSetWindow:
         definition = self.def_entry.get()
         self.vocab_treeview.insert("", tk.END, values=(word, definition))
 
-
     def edit_vocab_word(self, event):
         # Edit the selected vocab word
         row_id = self.vocab_treeview.identify_row(event.y)
         if not row_id:
             return
-        
+
         # open a new edit window
         word = self.vocab_treeview.item(row_id)["values"][0]
         definition = self.vocab_treeview.item(row_id)["values"][1]
@@ -468,14 +461,13 @@ class EditVocabSetWindow:
             word_entry.get(), def_entry.get(), row_id))
         save_word_button.grid(row=2, column=0)
 
-        cancel_button = tk.Button(editwindow, text="Cancel", command=editwindow.destroy)
+        cancel_button = tk.Button(
+            editwindow, text="Cancel", command=editwindow.destroy)
         cancel_button.grid(row=2, column=1)
-    
+
         def save_word(word, definition, row_id):
             self.vocab_treeview.item(row_id, values=(word, definition))
             editwindow.destroy()
-
-
 
     def delete_vocab_word(self, event):
         # Delete the selected vocab word
@@ -483,8 +475,6 @@ class EditVocabSetWindow:
         if not row_id:
             return
         self.vocab_treeview.delete(row_id)
-        
-
 
     def save_vocab(self):
         # Save the vocab set
@@ -501,28 +491,26 @@ class EditVocabSetWindow:
             c.execute("DELETE FROM vocab WHERE set_id=?", (self.set_id,))
             c.executemany(
                 "INSERT INTO vocab (set_id, word, definition) VALUES (?, ?, ?)", vocab_items)
-            
-            c.execute("UPDATE vocab_sets SET name=?, description=? WHERE set_id=?", (self.rename_entry.get(), self.description_entry.get(), self.set_id))
-            
+
+            c.execute("UPDATE vocab_sets SET name=?, description=? WHERE set_id=?",
+                      (self.rename_entry.get(), self.description_entry.get(), self.set_id))
+
             conn.commit()
             c.close()
-
-
 
         self.app.refresh_vocab_sets()
         self.parent.deiconify()
         self.window.destroy()
 
 
-
 class StartTrainingWindow:
     def __init__(self, parent, app):
         self.settings_file_path = 'settings.json'
-        self.default_settings ={
-                "interval": 300,
-                "number_of_words": 0,
-            }
-        
+        self.default_settings = {
+            "interval": 300,
+            "number_of_words": 0,
+        }
+
         self.settings = self.load_settings()
         self.app = app
         self.parent = parent
@@ -531,20 +519,19 @@ class StartTrainingWindow:
         self.window.title("Training")
 
 
-
 # Settings
-        self.settings_label = tk.Label(self.window, text="Settings", font=("Arial", 24))
+        self.settings_label = tk.Label(
+            self.window, text="Settings", font=("Arial", 24))
         self.settings_label.grid(row=0, column=0)
         # create a dictionary that has reference to the setting entry
         self.entry_dict = {}
-        for r, setting in enumerate(self.settings,1):
+        for r, setting in enumerate(self.settings, 1):
             setting_label = tk.Label(self.window, text=setting)
             setting_label.grid(row=r, column=0)
             setting_entry = tk.Entry(self.window)
             setting_entry.grid(row=r, column=1)
             setting_entry.insert(0, self.settings[setting])
             self.entry_dict[setting] = setting_entry
-
 
         self.default_settings_button = tk.Button(
             self.window, text="Default Settings", command=self.set_default_settings)
@@ -556,7 +543,8 @@ class StartTrainingWindow:
 
 
 # display the vocab set
-        self.vocab_label = tk.Label(self.window, text="Vocab Set", font=("Arial", 24))
+        self.vocab_label = tk.Label(
+            self.window, text="Vocab Set", font=("Arial", 24))
         self.vocab_label.grid(row=0, column=2)
         self.vocab_set_listbox = tk.Listbox(self.window)
         self.vocab_set_listbox.grid(row=1, column=2, rowspan=r+1)
@@ -576,21 +564,19 @@ class StartTrainingWindow:
         self.cancel_button.grid(row=r+2, column=2)
         self.after_id = None
 
-
     def set_default_settings(self):
         self.reload_default_settings()
-    
+
     def reload_default_settings(self):
         for setting in self.default_settings:
             self.entry_dict[setting].delete(0, tk.END)
             self.entry_dict[setting].insert(0, self.default_settings[setting])
-    
+
     def reload_settings_from_file(self):
         self.settings = self.load_settings()
         for setting in self.settings:
             self.entry_dict[setting].delete(0, tk.END)
             self.entry_dict[setting].insert(0, self.settings[setting])
-
 
     def load_settings(self):
         if not os.path.exists(self.settings_file_path):
@@ -614,10 +600,10 @@ class StartTrainingWindow:
         for set_title in self.app.get_vocab_sets():
             self.vocab_set_listbox.insert(tk.END, set_title)
 
-
     def schedule_next_popup(self):
         if self.training_flag:
-            self.after_id = self.window.after(int(self.settings["interval"])*1000, self.show_popup)
+            self.after_id = self.window.after(
+                int(self.settings["interval"])*1000, self.show_popup)
 
     def show_popup(self):
         self.num_display = int(self.settings['number_of_words'])
@@ -628,19 +614,21 @@ class StartTrainingWindow:
         elif self.num_display > remaining:
             self.words_to_send = self.vocab_shuffle[self.curr_index:]
             random.shuffle(self.vocab_shuffle)
-            additoinal_words = self.num_display - remaining
-            self.words_to_send.extend(self.vocab_shuffle[:additoinal_words])
-            self.curr_index = additoinal_words
+            additional_words = self.num_display - remaining
+            self.words_to_send.extend(self.vocab_shuffle[:additional_words])
+            self.curr_index = additional_words
         else:
             self.words_to_send = self.vocab_shuffle[self.curr_index:self.curr_index+self.num_display]
             self.curr_index += self.num_display
-        TestPopup(self.window, self.app, self.settings, self.set_title, self.words_to_send)
+        TestPopup(self.window, self.app, self.settings,
+                  self.set_title, self.words_to_send, self)
         self.schedule_next_popup()
 
     def start_training(self):
         if self.training_flag:
             messagebox.showwarning(
                 "Warning", "Training is already in progress.")
+            return
         index = self.vocab_set_listbox.curselection()
         if not index:
             messagebox.showwarning(
@@ -650,12 +638,12 @@ class StartTrainingWindow:
         self.window.title(f'Training - {self.set_title}')
         self.training_flag = True
         self.save_settings()
-        self.vocab_shuffle = list(self.app.get_vocab_list_by_name(self.set_title).items())
+        self.curr_vocab_list = self.app.get_vocab_list_by_name(self.set_title)
+        self.vocab_shuffle = list(self.curr_vocab_list.items())
         random.shuffle(self.vocab_shuffle)
         self.curr_index = 0
         self.show_popup()
         self.start_stats()
-    
 
     def start_stats(self):
         stats_label = tk.Label(self.window, text="Stats", font=("Arial", 24))
@@ -665,9 +653,70 @@ class StartTrainingWindow:
         timer_frame.grid(row=1, column=3)
         timer_label = tk.Label(timer_frame, text="Timer:", font=("Arial", 24))
         timer_label.grid(row=0, column=0)
-        self.time_label = tk.Label(timer_frame, text="00:00:00", font=("Arial", 24))
+        self.time_label = tk.Label(
+            timer_frame, text="00:00:00", font=("Arial", 24))
         self.time_label.grid(row=0, column=1)
         self.update_timer()
+
+    def display_results(self, answer_entry_dict):
+        correct = 0
+        total = 0
+        incorrect_dict = {}
+        for word in answer_entry_dict:
+            if answer_entry_dict[word].get() != self.curr_vocab_list[word]:
+                incorrect_dict[word] = answer_entry_dict[word].get()
+            else:
+                correct += 1
+            total += 1
+        self.numcorrect_label = tk.Label(
+            self.window, text=f"Number correct: {correct} / {total}", font=("Arial", 24))
+        self.numcorrect_label.grid(row=2, column=3)
+        incorrect_words_label = tk.Label(
+            self.window, text=f"Incorrect Words", font=("Arial", 24))
+        incorrect_words_label.grid(row=4, column=3)
+
+        # treeview displaying what words that user got wrong with 3 columns: vocab, definition, and user's answer
+        self.last_answer_treeview = ttk.Treeview(self.window, columns=(
+            'vocab', 'definition', 'answer'), show='headings')
+        self.last_answer_treeview.grid(row=5, column=3)
+        for word in incorrect_dict:
+            self.last_answer_treeview.insert('', 'end', values=(
+                word, self.curr_vocab_list[word], incorrect_dict[word]))
+        self.last_answer_treeview.column('vocab', width=100, anchor='center')
+        self.last_answer_treeview.heading('vocab', text='Vocab')
+        self.last_answer_treeview.heading('definition', text='Definition')
+        self.last_answer_treeview.heading('answer', text='Your Answer')
+
+
+
+        # display entire history of words with 4 columns: vocab, definition, user's answer, and whether it was correct or not
+        history_label = tk.Label(self.window, text=f"History", font=("Arial", 24))
+        history_label.grid(row=6, column=3)
+        self.history_treeview = ttk.Treeview(self.window, columns=(
+            'vocab', 'definition', 'answer', 'correct'), show='headings')
+        self.history_treeview.grid(row=7, column=3)
+        for word in answer_entry_dict:
+            if word in incorrect_dict:
+                self.history_treeview.insert('', 'end', values=(
+                    word, self.curr_vocab_list[word], incorrect_dict[word], 'Incorrect'))
+            else:
+                self.history_treeview.insert('', 'end', values=(
+                    word, self.curr_vocab_list[word], self.curr_vocab_list[word], 'Correct'))
+        self.history_treeview.column('vocab', width=100, anchor='center')
+        self.history_treeview.heading('vocab', text='Vocab')
+        self.history_treeview.heading('definition', text='Definition')
+        self.history_treeview.heading('answer', text='Your Answer')
+        self.history_treeview.heading('correct', text='Correct?')
+
+        history_scrollbar = tk.Scrollbar(self.window, orient="vertical", command=self.history_treeview.yview)
+        history_scrollbar.grid(row=7, column=4, sticky="ns")
+        self.history_treeview.configure(yscrollcommand=history_scrollbar.set)
+
+
+    
+
+
+
 
     def update_timer(self):
         if not self.training_flag:
@@ -681,16 +730,17 @@ class StartTrainingWindow:
         new_time_str = f"{current_time // 3600:02d}:{(current_time % 3600) // 60:02d}:{current_time % 60:02d}"
         self.time_label.config(text=new_time_str)
         self.time_after_id = self.window.after(1000, self.update_timer)
-        
+
     def stop_training(self):
         if self.after_id is not None:
             self.window.after_cancel(self.after_id)
-            self.after_id = None            
+            self.after_id = None
         self.training_flag = False
         self.window.title("Training")
 
+
 class TestPopup:
-    def __init__(self, parent, app, settings, set_title, words):
+    def __init__(self, parent, app, settings, set_title, words, start_training_window):
         self.window = tk.Toplevel(parent)
         self.window.title(F'Test Popup - {set_title}')
         self.settings = settings
@@ -698,6 +748,7 @@ class TestPopup:
         self.parent = parent
         self.app = app
         self.vocab_list = words
+        self.start_training_window = start_training_window
 
         self.answer_entry_dict = {}
         for r, (vocab, definition) in enumerate(self.vocab_list):
@@ -710,13 +761,11 @@ class TestPopup:
         self.check_button = tk.Button(
             self.window, text="Check", command=self.check_answer)
         self.check_button.grid(row=r+1, column=0)
+
     def check_answer(self):
-        correct = 0
-        for vocab, definition in self.vocab_list:
-            if self.answer_entry_dict[vocab].get() == definition:
-                correct += 1
-        messagebox.showinfo("Result", f'You got {correct} out of {len(self.vocab_list)} correct.')
+        self.start_training_window.display_results(self.answer_entry_dict)
         self.window.destroy()
+
 
 if __name__ == "__main__":
     root = tk.Tk()
